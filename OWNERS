@@ -1,0 +1,8 @@
+# See the OWNERS docs at https://github.com/cloudforet-io/tsc/blob/master/OWNERS.md
+
+approvers:
+  - alice
+  - bob
+
+reviewers:
+  - carol
