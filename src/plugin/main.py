@@ -70,7 +70,6 @@ def event_parse(params: dict) -> Dict[str, list]:
     options = params["options"]
 
     evnet_parse_mgr = EventParserManager.get_manager_by_schema_id(data["schemaId"])
-    print(evnet_parse_mgr)
     event_responses = {
         "results": evnet_parse_mgr.event_parse(
             options=options, data=data.get("data", {})

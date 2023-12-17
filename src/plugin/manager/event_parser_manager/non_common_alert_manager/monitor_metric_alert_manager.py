@@ -9,9 +9,6 @@ class MonitorMetricAlertManager(EventParserManager):
         super().__init__(*args, **kwargs)
 
     def event_parse(self, options, data) -> list:
-        import pprint
-
-        pprint.pprint(data)
         context = data.get("context")
         response = {
             "event_key": f"{context.get('id')}:{context.get('timestamp')}",
