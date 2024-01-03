@@ -13,11 +13,12 @@ class MonitorMetricAlertManager(EventParserManager):
         response = {
             "event_key": f"{context.get('id')}:{context.get('timestamp')}",
             "event_type": "ALERT",
-            "title": f"[{context.get('name')}]",
+            "title": context.get("name"),
             "description": data.get("description"),
             "severity": self.get_severity(context.get("severity", "")),
             "resource": self.get_resource_info(context),
             "rule": context.get("name"),
+            "image_url": context.get("portalLink", ""),
             "occurred_at": context.get("timestamp"),
             "additional_info": self.get_additional_info(context.get("condition", {})),
         }
@@ -37,19 +38,13 @@ class MonitorMetricAlertManager(EventParserManager):
         resource_info = {}
 
         if resource_id := context.get("resourceId"):
-            resource_info["id"] = resource_id
+            resource_info["resource_id"] = resource_id
 
         if resource_name := context.get("resourceName"):
             resource_info["name"] = resource_name
 
-        if resource_group := context.get("resourceGroupName"):
-            resource_info["group"] = resource_group
-
         if resource_type := context.get("resourceType"):
-            resource_info["type"] = resource_type
-
-        if resource_link := context.get("portalLink"):
-            resource_info["link"] = resource_link
+            resource_info["resource_type"] = resource_type
 
         return resource_info
 
