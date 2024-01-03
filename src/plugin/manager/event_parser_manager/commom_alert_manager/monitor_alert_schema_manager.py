@@ -13,7 +13,7 @@ class MonitorAlertSchemaManager(EventParserManager):
         response = {
             "event_key": essentials.get("alertId"),
             "event_type": self.get_event_status(essentials.get("monitorCondition")),
-            "title": f"[{essentials.get('alertRule')}]",
+            "title": essentials.get("alertRule"),
             "description": essentials.get("description"),
             "severity": self.get_severity(essentials.get("severity", "")),
             "resource": self.get_resource_info(essentials),
