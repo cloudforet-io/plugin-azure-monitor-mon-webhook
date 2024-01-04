@@ -1,6 +1,9 @@
-from spaceone.core.manager import BaseManager
+import logging
 from abc import abstractmethod, ABC
 
+from spaceone.core.manager import BaseManager
+
+_LOGGER = logging.getLogger("spaceone")
 
 class EventParserManager(BaseManager, ABC):
     schema_id = None

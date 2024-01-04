@@ -1,5 +1,5 @@
+import json
 from plugin.manager.event_parser_manager.base_manager import EventParserManager
-from abc import ABCMeta
 
 
 class MonitorAlertSchemaManager(EventParserManager):
@@ -10,27 +10,22 @@ class MonitorAlertSchemaManager(EventParserManager):
 
     def event_parse(self, options, data) -> list:
         essentials = data.get("essentials")
+        alert_context = data.get("alertContext")
+        custom_properties = data.get("customProperties")
+
         response = {
             "event_key": essentials.get("alertId"),
             "event_type": self.get_event_status(essentials.get("monitorCondition")),
             "title": essentials.get("alertRule"),
-            "description": essentials.get("description"),
+            "description": self.make_description(essentials.get("description"), alert_context),
             "severity": self.get_severity(essentials.get("severity", "")),
             "resource": self.get_resource_info(essentials),
             "rule": essentials.get("alertRule"),
+            "image_url": "",
             "occurred_at": essentials.get("firedDateTime"),
-            "additional_info": self.get_additional_info(data),
+            "additional_info": custom_properties,
         }
         return [response]
-
-    @staticmethod
-    def get_additional_info(data: dict) -> dict:
-        additional_info = {}
-        if affected_resource := data.get("essentials").get("alertTargetIDs"):
-            additional_info["affected_resource"] = affected_resource
-        if alert_context := data.get("alertContext"):
-            additional_info["alert_context"] = alert_context
-        return additional_info
 
     @staticmethod
     def get_resource_info(essentials: dict) -> dict:
@@ -61,6 +56,12 @@ class MonitorAlertSchemaManager(EventParserManager):
         elif origin_severity.lower() == "sev3":
             return "INFO"
         elif origin_severity.lower() == "sev4":
-            return "NONE"
+            return "INFO"
         else:
-            return "UNKNOWN"
+            return "NOT_AVAILABLE"
+
+    @staticmethod
+    def make_description(description: str, alert_context: dict) -> str:
+        tmp_description = json.dumps(alert_context, indent=2)
+
+        return f"Description: {description}\nAlertContext: {tmp_description}"

@@ -1,5 +1,6 @@
+import json
+from typing import List
 from plugin.manager.event_parser_manager.base_manager import EventParserManager
-from abc import ABCMeta
 
 
 class MonitorMetricAlertManager(EventParserManager):
@@ -10,28 +11,44 @@ class MonitorMetricAlertManager(EventParserManager):
 
     def event_parse(self, options, data) -> list:
         context = data.get("context")
+
         response = {
-            "event_key": f"{context.get('id')}:{context.get('timestamp')}",
-            "event_type": "ALERT",
+            "event_key": context.get('id'),
+            "event_type": self.get_event_status(data.get("status")),
             "title": context.get("name"),
-            "description": data.get("description"),
+            "description": self.make_description(context.get("description"),
+                                                 context.get("condition", {}).get("allOf", [])),
             "severity": self.get_severity(context.get("severity", "")),
             "resource": self.get_resource_info(context),
             "rule": context.get("name"),
             "image_url": context.get("portalLink", ""),
             "occurred_at": context.get("timestamp"),
-            "additional_info": self.get_additional_info(context.get("condition", {})),
+            "additional_info": data.get("properties", {}),
         }
         return [response]
 
     @staticmethod
-    def get_additional_info(condition: dict) -> dict:
-        additional_info = {}
-        if all_of := condition.get("allOf"):
-            additional_info["all_of"] = all_of
-        if condition_type := condition.get("conditionType"):
-            additional_info["condition_type"] = condition_type
-        return additional_info
+    def make_description(description:str, all_of: List[dict]) -> str:
+        tmp_description = json.dumps(all_of, indent=2)
+
+        return f"Description: {description}\n{tmp_description}"
+
+    @staticmethod
+    def get_event_status(status: str) -> str:
+        """
+
+        Args:
+            status:
+            - Deactivated
+            - Activated
+        Returns:
+            - ALERT
+            - RECOVERY
+        """
+        if status == "Deactivated":
+            return "RECOVERY"
+        else:
+            return "ALERT"
 
     @staticmethod
     def get_resource_info(context: dict) -> dict:
