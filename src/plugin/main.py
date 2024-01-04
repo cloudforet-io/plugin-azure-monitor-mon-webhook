@@ -1,6 +1,10 @@
+import logging
 from typing import Dict
+
 from spaceone.monitoring.plugin.webhook.lib.server import WebhookPluginServer
 from .manager.event_parser_manager.base_manager import EventParserManager
+
+_LOGGER = logging.getLogger("spaceone")
 
 app = WebhookPluginServer()
 
@@ -69,11 +73,25 @@ def event_parse(params: dict) -> Dict[str, list]:
     data = params["data"]
     options = params["options"]
 
-    evnet_parse_mgr = EventParserManager.get_manager_by_schema_id(data["schemaId"])
-    event_responses = {
-        "results": evnet_parse_mgr.event_parse(
-            options=options, data=data.get("data", {})
-        )
-    }
+    # schemaId is now exists some cases
+    if data.get("schemaId") is None:
+        data["schemaId"] = "MonitorActivityLogAlert"
+
+    event_parse_mgr = EventParserManager.get_manager_by_schema_id(data["schemaId"])
+
+    event_responses = {}
+
+    if data["schemaId"] == "MonitorActivityLogAlert":
+        event_responses.update({
+            "results": event_parse_mgr.event_parse(
+                options=options, data=data
+            )
+        })
+    else:
+        event_responses.update({
+            "results": event_parse_mgr.event_parse(
+                options=options, data=data.get("data", {})
+            )
+        })
 
     return event_responses
