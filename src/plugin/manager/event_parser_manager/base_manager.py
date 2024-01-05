@@ -20,3 +20,27 @@ class EventParserManager(BaseManager, ABC):
         for sub_class in cls.__subclasses__():
             if sub_class.schema_id == schema_id:
                 return sub_class()
+
+    @staticmethod
+    def get_resource(resource_id: str) -> dict:
+        """
+
+        Args:
+            resource_id:
+             /subscriptions/xxxx/resourcegroups/xxxx/providers/microsoft.compute/virtualmachines/xxxx
+
+        Returns:
+            subscriptions : "xxx"
+            resourcegroups: "xxx"
+            providers: "xxx"
+            {service}: "xxxx"
+            {name}: "xxxxx"
+
+        """
+        target: list = resource_id.split("/")[1:]
+        k: list = []
+        v: list = []
+        for i, t in enumerate(target):
+            k.append(t) if i/2 == 0 else v.append(t)
+
+        return dict(zip(k, v))

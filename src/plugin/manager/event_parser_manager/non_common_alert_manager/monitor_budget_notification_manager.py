@@ -20,7 +20,7 @@ class BudgetNotificationManager(EventParserManager):
         response = {
             "event_key": utils.datetime_to_iso8601(datetime.utcnow()),
             "event_type": "ALERT",
-            "title": data.get("BudgetName"),
+            "title": self.make_title(data),
             "description": self.make_description(data),
             "severity": "ERROR",
             "resource": self.get_resource_info(data),
@@ -32,8 +32,22 @@ class BudgetNotificationManager(EventParserManager):
         return [response]
 
     @staticmethod
+    def make_title(data: dict) -> str:
+        return (f"Budget Alarm {data.get('BudgetName')} on "
+                f"{data.get('AccountName')}({data.get('DepartmentName')}) at {datetime.utcnow()}")
+    @staticmethod
     def make_description(data: dict) -> str:
-        return f"{json.dumps(data, indent=2)}"
+        return (f"Budget name: {data.get('BudgetName')}\n"
+                f"Budget type: {data.get('BudgetType')}\n"
+                f"Account name: {data.get('AccountName')}\n"
+                f"Department name: {data.get('DepartmentName')}\n"
+                f"Enrollment number: {data.get('EnrollmentNumber')}\n"
+                f"Notification threshold: {data.get('NotificationThresholdAmount')}\n"
+                f"Budget: {data.get('Budget')}\n"
+                f"Unit: {data.get('Unit')}\n"
+                f"Cost: {data.get('SpendingAmount')}"
+                f"Resource group: {data.get('ResourceGroup')}\n"
+                f"Fired time: {datetime.utcnow()}\n")
 
     @staticmethod
     def get_resource_info(data: dict) -> dict:

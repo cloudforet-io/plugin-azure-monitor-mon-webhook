@@ -15,9 +15,8 @@ class MonitorMetricAlertManager(EventParserManager):
         response = {
             "event_key": context.get('id'),
             "event_type": self.get_event_status(data.get("status")),
-            "title": context.get("name"),
-            "description": self.make_description(context.get("description"),
-                                                 context.get("condition", {}).get("allOf", [])),
+            "title": self.make_title(context),
+            "description": self.make_description(data),
             "severity": self.get_severity(context.get("severity", "")),
             "resource": self.get_resource_info(context),
             "rule": context.get("name"),
@@ -28,10 +27,24 @@ class MonitorMetricAlertManager(EventParserManager):
         return [response]
 
     @staticmethod
-    def make_description(description:str, all_of: List[dict]) -> str:
-        tmp_description = json.dumps(all_of, indent=2)
+    def make_title(context: dict) -> str:
+        return (f"{context.get('severity')} {context.get('name')} on {context.get('resourceName')} at "
+                f"{context.get('timestamp')}")
 
-        return f"Description: {description}\n{tmp_description}"
+    @staticmethod
+    def make_description(data: dict) -> str:
+        context = data.get("context", {})
+
+        return (f"Alert name: {context.get('name')}\n"
+                f"Severity: {context.get('severity')}\n"
+                f"Status: {data.get('status')}\n"
+                f"Resource name: {context.get('resourceName')}\n"
+                f"Resource type: {context.get('resourceType')}\n"
+                f"Resource group: {context.get('resourceGroupName')}\n"
+                f"Description: {context.get('description')}\n"
+                f"Condition type: {context.get('conditionType')}\n"
+                f"Fired time: {context.get('timestamp')}\n"
+                f"Alert ID: {context.get('id')}\n")
 
     @staticmethod
     def get_event_status(status: str) -> str:
