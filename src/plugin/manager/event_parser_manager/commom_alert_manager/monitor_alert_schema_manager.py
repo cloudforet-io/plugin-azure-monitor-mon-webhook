@@ -16,8 +16,8 @@ class MonitorAlertSchemaManager(EventParserManager):
         response = {
             "event_key": essentials.get("alertId"),
             "event_type": self.get_event_status(essentials.get("monitorCondition")),
-            "title": essentials.get("alertRule"),
-            "description": self.make_description(essentials.get("description"), alert_context),
+            "title": self.make_title(essentials),
+            "description": self.make_description(essentials, alert_context),
             "severity": self.get_severity(essentials.get("severity", "")),
             "resource": self.get_resource_info(essentials),
             "rule": essentials.get("alertRule"),
@@ -26,6 +26,18 @@ class MonitorAlertSchemaManager(EventParserManager):
             "additional_info": custom_properties,
         }
         return [response]
+
+    def make_title(self, essentials: dict) -> str:
+        resource = self.get_affected_resource(essentials)
+
+        return (f"{essentials.get('severity')} {essentials.get('alertRule')} on {resource} at "
+                f"{essentials.get('firedDateTime')}")
+
+    @staticmethod
+    def get_affected_resource(essentials: dict) -> str:
+        resource = essentials.get("configurationItems")[0] if len(essentials.get("configurationItems")) > 0 else ""
+
+        return resource
 
     @staticmethod
     def get_resource_info(essentials: dict) -> dict:
@@ -61,7 +73,39 @@ class MonitorAlertSchemaManager(EventParserManager):
             return "NOT_AVAILABLE"
 
     @staticmethod
-    def make_description(description: str, alert_context: dict) -> str:
-        tmp_description = json.dumps(alert_context, indent=2)
+    def get_alert_target(alert_target_id: str) -> dict:
+        """
 
-        return f"Description: {description}\nAlertContext: {tmp_description}"
+        Args:
+            alert_target_id:
+             /subscriptions/xxxx/resourcegroups/xxxx/providers/microsoft.compute/virtualmachines/xxxx
+
+        Returns:
+            subscriptions : "xxx"
+            resourcegroups: "xxx"
+            providers: "xxx"
+            {service}: "xxxx"
+            {name}: "xxxxx"
+
+        """
+        target: list = alert_target_id.split("/")[1:]
+        k: list = []
+        v: list = []
+        for i, t in enumerate(target):
+            k.append(t) if i/2 == 0 else v.append(t)
+
+        return dict(zip(k, v))
+
+    def make_description(self, essentials: dict, alert_context: dict) -> str:
+        alert_target = self.get_alert_target(essentials.get("alertTargetIDs")[0])
+
+        return (f"Alert name: {essentials.get('alertRule')}\n"
+                f"Severity: {essentials.get('severity')}\n"
+                f"Monitor condition: {essentials.get('monitorCondition')}\n"
+                f"Affected resource: {self.get_affected_resource(essentials)}\n"
+                f"Resource group: {alert_target.get('resourcegroups')}\n"
+                f"Description: {essentials.get('description')}\n"
+                f"Monitoring service: {essentials.get('monitoringService')}\n"
+                f"Signal type: {essentials.get('signalType')}\n"
+                f"Fired time: {essentials.get('firedDateTime')}\n"
+                f"Alert ID: {essentials.get('alertId')}\n")

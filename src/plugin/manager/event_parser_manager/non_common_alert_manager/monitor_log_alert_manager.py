@@ -19,7 +19,7 @@ class LogAlertManager(EventParserManager):
         response = {
             "event_key": self.get_event_key(data),
             "event_type": "ALERT",
-            "title": data.get("AlertRuleName"),
+            "title": self.make_title(data),
             "description": self.make_description(data),
             "severity": self.get_severity(data.get("Severity")),
             "resource": self.get_resource_info(data),
@@ -30,17 +30,40 @@ class LogAlertManager(EventParserManager):
         }
         return [response]
 
+    def make_title(self, data: dict) -> str:
+        resource = self.get_alert_target(data.get('ResourceId'))
+
+        return (f"{data.get('Severity')} {data.get('AlertRuleName')} on {resource.get('workspaces')} at"
+                f"{datetime.utcnow()}")
+
+    def make_description(self, data: dict) -> str:
+        resource = self.get_alert_target(data.get('ResourceId'))
+
+        return (f"Alert name: {data.get('AlertRuleName')}\n"
+                f"Severity: {data.get('Severity')}\n"
+                f"Monitor condition: ALERT\n"
+                f"Affected resource: {resource.get('workspaces')}\n"
+                f"Resource group: {resource.get('resourceGroups')}\n"
+                f"Description: {data.get('Description')}\n"
+                f"Alert type: {data.get('AlertType')}\n"
+                f"Search Query: {data.get('SearchQuery')}"
+                f"Fired time: {datetime.utcnow()}\n")
+
+    @staticmethod
+    def get_alert_target(resource_id: str) -> dict:
+        target: list = resource_id.split("/")[1:]
+        k: list = []
+        v: list = []
+        for i, t in enumerate(target):
+            k.append(t) if i/2 == 0 else v.append(t)
+
+        return dict(zip(k, v))
+
     @staticmethod
     def get_event_key(data: dict) -> str:
         alert_rule_name = data.get("AlertRuleName")
 
         return f"{alert_rule_name}-{datetime.utcnow()}"
-
-    @staticmethod
-    def make_description(data: dict) -> str:
-        description = data.get("Description")
-
-        return f"Description: {description}\nSearchResult: {data.get('SearchResult')}"
 
     @staticmethod
     def get_severity(severity: str) -> str:

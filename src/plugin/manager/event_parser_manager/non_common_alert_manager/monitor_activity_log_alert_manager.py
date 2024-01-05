@@ -14,14 +14,13 @@ class MonitorActivityLogAlertManager(EventParserManager):
         super().__init__(*args, **kwargs)
 
     def event_parse(self, options, data) -> list:
-
         activity_log = data.get("context", {}).get("activityLog", {})
 
         response = {
             "event_key": activity_log.get("eventDataId", ""),
             "event_type": self.get_event_type(data.get("status")),
-            "title": self.get_title(activity_log),
-            "description": self.make_description(data),
+            "title": self.make_title(activity_log),
+            "description": self.make_description(activity_log),
             "severity": self.get_severity(activity_log),
             "resource": self.get_resource_info(activity_log),
             "rule": activity_log.get("operationName"),
@@ -32,8 +31,9 @@ class MonitorActivityLogAlertManager(EventParserManager):
         return [response]
 
     @staticmethod
-    def get_title(activity_log: dict) -> str:
-        return activity_log.get("operationName")
+    def make_title(activity_log: dict) -> str:
+        return (f"{activity_log.get('level')} {activity_log.get('operationName')}"
+                f"{activity_log.get('resourceId')} at {activity_log.get('eventTimestamp')}")
 
     @staticmethod
     def get_event_type(status: str) -> str:
@@ -52,12 +52,18 @@ class MonitorActivityLogAlertManager(EventParserManager):
         else:
             return "ALERT"
 
-
     @staticmethod
     def make_description(activity_log: dict) -> str:
-        description = activity_log.get("Description")
-
-        return f"Description: {description}\nActivityLog: {json.dumps(activity_log, indent=2)}"
+        return (f"Alert name: {activity_log.get('operationName')}\n"
+                f"Severity: {activity_log.get('level')}\n"
+                f"Affected resource: {activity_log.get('resourceId')}\n"
+                f"Caller: {activity_log.get('caller')}\n"
+                f"Resource group: {activity_log.get('resourceGroupName')}\n"
+                f"Resource type: {activity_log.get('resourceType')}"
+                f"Description: {activity_log.get('description')}\n"
+                f"Event source: {activity_log.get('eventSource')}\n"
+                f"Fired time: {activity_log.get('eventTimestamp')}\n"
+                f"Event data id: {activity_log.get('eventDataId')}\n")
 
     @staticmethod
     def get_severity(activity_log: dict) -> str:
