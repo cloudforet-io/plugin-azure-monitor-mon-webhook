@@ -30,34 +30,23 @@ class LogAlertManager(EventParserManager):
         }
         return [response]
 
-    def make_title(self, data: dict) -> str:
-        resource = self.get_alert_target(data.get('ResourceId'))
+    @staticmethod
+    def make_title(data: dict) -> str:
 
-        return (f"{data.get('Severity')} {data.get('AlertRuleName')} on {resource.get('workspaces')} at"
-                f"{datetime.utcnow()}")
+        return f"{data.get('AlertRuleName')}"
 
     def make_description(self, data: dict) -> str:
-        resource = self.get_alert_target(data.get('ResourceId'))
+        resource = self.get_resource(data.get('ResourceId'))
 
-        return (f"Alert name: {data.get('AlertRuleName')}\n"
-                f"Severity: {data.get('Severity')}\n"
-                f"Monitor condition: ALERT\n"
-                f"Affected resource: {resource.get('workspaces')}\n"
-                f"Resource group: {resource.get('resourceGroups')}\n"
-                f"Description: {data.get('Description')}\n"
-                f"Alert type: {data.get('AlertType')}\n"
-                f"Search Query: {data.get('SearchQuery')}"
-                f"Fired time: {datetime.utcnow()}\n")
-
-    @staticmethod
-    def get_alert_target(resource_id: str) -> dict:
-        target: list = resource_id.split("/")[1:]
-        k: list = []
-        v: list = []
-        for i, t in enumerate(target):
-            k.append(t) if i/2 == 0 else v.append(t)
-
-        return dict(zip(k, v))
+        return (f"- Alert name: {data.get('AlertRuleName')}\n"
+                f"- Severity: {data.get('Severity')}\n"
+                f"- Monitor condition: ALERT\n"
+                f"- Affected resource: {resource.get('workspaces')}\n"
+                f"- Resource group: {resource.get('resourceGroups')}\n"
+                f"- Description: {data.get('Description')}\n"
+                f"- Alert type: {data.get('AlertType')}\n"
+                f"- Search Query: {data.get('SearchQuery')}"
+                f"- Fired time: {datetime.utcnow()}\n")
 
     @staticmethod
     def get_event_key(data: dict) -> str:
@@ -86,4 +75,5 @@ class LogAlertManager(EventParserManager):
             "resource_id": data.get("ResourceId"),
             "name": data.get("ResourceId")
         }
+
 

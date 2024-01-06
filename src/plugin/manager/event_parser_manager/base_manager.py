@@ -41,6 +41,6 @@ class EventParserManager(BaseManager, ABC):
         k: list = []
         v: list = []
         for i, t in enumerate(target):
-            k.append(t) if i/2 == 0 else v.append(t)
+            k.append(t) if i%2 == 0 else v.append(t)
 
         return dict(zip(k, v))

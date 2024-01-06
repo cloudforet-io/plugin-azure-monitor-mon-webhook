@@ -1,5 +1,8 @@
-import json
+import logging
+
 from plugin.manager.event_parser_manager.base_manager import EventParserManager
+
+_LOGGER = logging.getLogger("spaceone")
 
 
 class MonitorAlertSchemaManager(EventParserManager):
@@ -17,7 +20,7 @@ class MonitorAlertSchemaManager(EventParserManager):
             "event_key": essentials.get("alertId"),
             "event_type": self.get_event_status(essentials.get("monitorCondition")),
             "title": self.make_title(essentials),
-            "description": self.make_description(essentials, alert_context),
+            "description": self.make_description(essentials),
             "severity": self.get_severity(essentials.get("severity", "")),
             "resource": self.get_resource_info(essentials),
             "rule": essentials.get("alertRule"),
@@ -27,11 +30,9 @@ class MonitorAlertSchemaManager(EventParserManager):
         }
         return [response]
 
-    def make_title(self, essentials: dict) -> str:
-        resource = self.get_affected_resource(essentials)
-
-        return (f"{essentials.get('severity')} {essentials.get('alertRule')} on {resource} at "
-                f"{essentials.get('firedDateTime')}")
+    @staticmethod
+    def make_title(essentials: dict) -> str:
+        return f"{essentials.get('alertRule')}"
 
     @staticmethod
     def get_affected_resource(essentials: dict) -> str:
@@ -92,20 +93,20 @@ class MonitorAlertSchemaManager(EventParserManager):
         k: list = []
         v: list = []
         for i, t in enumerate(target):
-            k.append(t) if i/2 == 0 else v.append(t)
+            k.append(t) if i % 2 == 0 else v.append(t)
 
         return dict(zip(k, v))
 
-    def make_description(self, essentials: dict, alert_context: dict) -> str:
-        alert_target = self.get_alert_target(essentials.get("alertTargetIDs")[0])
+    def make_description(self, essentials: dict) -> str:
+        alert_target = self.get_resource(essentials.get("alertTargetIDs")[0])
 
-        return (f"Alert name: {essentials.get('alertRule')}\n"
-                f"Severity: {essentials.get('severity')}\n"
-                f"Monitor condition: {essentials.get('monitorCondition')}\n"
-                f"Affected resource: {self.get_affected_resource(essentials)}\n"
-                f"Resource group: {alert_target.get('resourcegroups')}\n"
-                f"Description: {essentials.get('description')}\n"
-                f"Monitoring service: {essentials.get('monitoringService')}\n"
-                f"Signal type: {essentials.get('signalType')}\n"
-                f"Fired time: {essentials.get('firedDateTime')}\n"
-                f"Alert ID: {essentials.get('alertId')}\n")
+        return (f"- Alert name: {essentials.get('alertRule')}\n"
+                f"- Severity: {essentials.get('severity')}\n"
+                f"- Monitor condition: {essentials.get('monitorCondition')}\n"
+                f"- Affected resource: {self.get_affected_resource(essentials)}\n"
+                f"- Resource group: {alert_target.get('resourcegroups')}\n"
+                f"- Description: {essentials.get('description')}\n"
+                f"- Monitoring service: {essentials.get('monitoringService')}\n"
+                f"- Signal type: {essentials.get('signalType')}\n"
+                f"- Fired time: {essentials.get('firedDateTime')}\n"
+                f"- Alert ID: {essentials.get('alertId')}\n")
