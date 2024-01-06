@@ -1,6 +1,8 @@
-import json
-from typing import List
+import logging
+
 from plugin.manager.event_parser_manager.base_manager import EventParserManager
+
+_LOGGER = logging.getLogger("spaceone")
 
 
 class MonitorMetricAlertManager(EventParserManager):
@@ -28,23 +30,22 @@ class MonitorMetricAlertManager(EventParserManager):
 
     @staticmethod
     def make_title(context: dict) -> str:
-        return (f"{context.get('severity')} {context.get('name')} on {context.get('resourceName')} at "
-                f"{context.get('timestamp')}")
+        return f"{context.get('name')}"
 
     @staticmethod
     def make_description(data: dict) -> str:
         context = data.get("context", {})
 
-        return (f"Alert name: {context.get('name')}\n"
-                f"Severity: {context.get('severity')}\n"
-                f"Status: {data.get('status')}\n"
-                f"Resource name: {context.get('resourceName')}\n"
-                f"Resource type: {context.get('resourceType')}\n"
-                f"Resource group: {context.get('resourceGroupName')}\n"
-                f"Description: {context.get('description')}\n"
-                f"Condition type: {context.get('conditionType')}\n"
-                f"Fired time: {context.get('timestamp')}\n"
-                f"Alert ID: {context.get('id')}\n")
+        return (f"- Alert name: {context.get('name')}\n"
+                f"- Severity: {context.get('severity')}\n"
+                f"- Status: {data.get('status')}\n"
+                f"- Resource name: {context.get('resourceName')}\n"
+                f"- Resource type: {context.get('resourceType')}\n"
+                f"- Resource group: {context.get('resourceGroupName')}\n"
+                f"- Description: {context.get('description')}\n"
+                f"- Condition type: {context.get('conditionType')}\n"
+                f"- Fired time: {context.get('timestamp')}\n"
+                f"- Alert ID: {context.get('id')}\n")
 
     @staticmethod
     def get_event_status(status: str) -> str:

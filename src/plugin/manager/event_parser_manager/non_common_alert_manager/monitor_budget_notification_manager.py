@@ -1,5 +1,4 @@
 import logging
-import json
 from datetime import datetime
 
 from spaceone.core import utils
@@ -33,21 +32,21 @@ class BudgetNotificationManager(EventParserManager):
 
     @staticmethod
     def make_title(data: dict) -> str:
-        return (f"Budget Alarm {data.get('BudgetName')} on "
-                f"{data.get('AccountName')}({data.get('DepartmentName')}) at {datetime.utcnow()}")
+        return f"Budget Alarm {data.get('BudgetName')}"
+
     @staticmethod
     def make_description(data: dict) -> str:
-        return (f"Budget name: {data.get('BudgetName')}\n"
-                f"Budget type: {data.get('BudgetType')}\n"
-                f"Account name: {data.get('AccountName')}\n"
-                f"Department name: {data.get('DepartmentName')}\n"
-                f"Enrollment number: {data.get('EnrollmentNumber')}\n"
-                f"Notification threshold: {data.get('NotificationThresholdAmount')}\n"
-                f"Budget: {data.get('Budget')}\n"
-                f"Unit: {data.get('Unit')}\n"
-                f"Cost: {data.get('SpendingAmount')}"
-                f"Resource group: {data.get('ResourceGroup')}\n"
-                f"Fired time: {datetime.utcnow()}\n")
+        return (f"- Budget name: {data.get('BudgetName')}\n"
+                f"- Budget type: {data.get('BudgetType')}\n"
+                f"- Account name: {data.get('AccountName')}\n"
+                f"- Department name: {data.get('DepartmentName')}\n"
+                f"- Enrollment number: {data.get('EnrollmentNumber')}\n"
+                f"- Notification threshold: {data.get('NotificationThresholdAmount')}\n"
+                f"- Budget: {data.get('Budget')}\n"
+                f"- Unit: {data.get('Unit')}\n"
+                f"- Cost: {data.get('SpendingAmount')}"
+                f"- Resource group: {data.get('ResourceGroup')}\n"
+                f"- Fired time: {datetime.utcnow()}\n")
 
     @staticmethod
     def get_resource_info(data: dict) -> dict:
