@@ -5,6 +5,7 @@ from spaceone.core.manager import BaseManager
 
 _LOGGER = logging.getLogger("spaceone")
 
+
 class EventParserManager(BaseManager, ABC):
     schema_id = None
 
@@ -37,10 +38,14 @@ class EventParserManager(BaseManager, ABC):
             {name}: "xxxxx"
 
         """
-        target: list = resource_id.split("/")[1:]
-        k: list = []
-        v: list = []
-        for i, t in enumerate(target):
-            k.append(t) if i%2 == 0 else v.append(t)
 
-        return dict(zip(k, v))
+        if resource_id:
+            target: list = resource_id.split("/")[1:]
+            k: list = []
+            v: list = []
+            for i, t in enumerate(target):
+                k.append(t) if i % 2 == 0 else v.append(t)
+
+            return dict(zip(k, v))
+        else:
+            return {}
