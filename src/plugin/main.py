@@ -74,6 +74,7 @@ def event_parse(params: dict) -> Dict[str, list]:
     options = params["options"]
 
     # schemaId is now exists some cases
+
     if data.get("schemaId") is None:
         data["schemaId"] = "MonitorActivityLogAlert"
 
@@ -82,16 +83,16 @@ def event_parse(params: dict) -> Dict[str, list]:
     event_responses = {}
 
     if data["schemaId"] == "MonitorActivityLogAlert":
-        event_responses.update({
-            "results": event_parse_mgr.event_parse(
-                options=options, data=data
-            )
-        })
+        event_responses.update(
+            {"results": event_parse_mgr.event_parse(options=options, data=data)}
+        )
     else:
-        event_responses.update({
-            "results": event_parse_mgr.event_parse(
-                options=options, data=data.get("data", {})
-            )
-        })
+        event_responses.update(
+            {
+                "results": event_parse_mgr.event_parse(
+                    options=options, data=data.get("data", {})
+                )
+            }
+        )
 
     return event_responses

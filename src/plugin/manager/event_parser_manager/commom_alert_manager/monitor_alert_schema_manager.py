@@ -7,6 +7,7 @@ _LOGGER = logging.getLogger("spaceone")
 
 class MonitorAlertSchemaManager(EventParserManager):
     schema_id = "azureMonitorCommonAlertSchema"
+    monitoring_service = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -15,20 +16,38 @@ class MonitorAlertSchemaManager(EventParserManager):
         essentials = data.get("essentials")
         alert_context = data.get("alertContext")
         custom_properties = data.get("customProperties")
+        try:
+            monitoring_service = essentials.get("monitoringService")
+            monitoring_service_mgr = self.get_manager_by_monitoring_service(
+                monitoring_service
+            )
 
-        response = {
-            "event_key": essentials.get("alertId"),
-            "event_type": self.get_event_status(essentials.get("monitorCondition")),
-            "title": self.make_title(essentials),
-            "description": self.make_description(essentials),
-            "severity": self.get_severity(essentials.get("severity", "")),
-            "resource": self.get_resource_info(essentials),
-            "rule": essentials.get("alertRule"),
-            "image_url": "",
-            "occurred_at": essentials.get("firedDateTime"),
-            "additional_info": custom_properties,
-        }
+            return monitoring_service_mgr.event_parse(options, data)
+        except Exception as e:
+            _LOGGER.error(
+                f"There is no manager for {self.monitoring_service}, schema_id:{self.schema_id}, {e}",
+                exc_info=True,
+            )
+
+            response = {
+                "event_key": essentials.get("alertId"),
+                "event_type": self.get_event_status(essentials.get("monitorCondition")),
+                "title": self.make_title(essentials),
+                "description": self.make_description(essentials),
+                "severity": self.get_severity(essentials.get("severity", "")),
+                "resource": self.get_resource_info(essentials),
+                "rule": essentials.get("alertRule"),
+                "image_url": "",
+                "occurred_at": essentials.get("firedDateTime"),
+                "additional_info": custom_properties,
+            }
         return [response]
+
+    @classmethod
+    def get_manager_by_monitoring_service(cls, monitoring_service: str):
+        for manager in cls.__subclasses__():
+            if manager.monitoring_service == monitoring_service:
+                return manager()
 
     @staticmethod
     def make_title(essentials: dict) -> str:
@@ -36,7 +55,11 @@ class MonitorAlertSchemaManager(EventParserManager):
 
     @staticmethod
     def get_affected_resource(essentials: dict) -> str:
-        resource = essentials.get("configurationItems")[0] if len(essentials.get("configurationItems")) > 0 else ""
+        resource = (
+            essentials.get("configurationItems")[0]
+            if len(essentials.get("configurationItems")) > 0
+            else ""
+        )
 
         return resource
 
@@ -100,13 +123,15 @@ class MonitorAlertSchemaManager(EventParserManager):
     def make_description(self, essentials: dict) -> str:
         alert_target = self.get_resource(essentials.get("alertTargetIDs")[0])
 
-        return (f"- Alert name: {essentials.get('alertRule')}\n"
-                f"- Severity: {essentials.get('severity')}\n"
-                f"- Monitor condition: {essentials.get('monitorCondition')}\n"
-                f"- Affected resource: {self.get_affected_resource(essentials)}\n"
-                f"- Resource group: {alert_target.get('resourcegroups')}\n"
-                f"- Description: {essentials.get('description')}\n"
-                f"- Monitoring service: {essentials.get('monitoringService')}\n"
-                f"- Signal type: {essentials.get('signalType')}\n"
-                f"- Fired time: {essentials.get('firedDateTime')}\n"
-                f"- Alert ID: {essentials.get('alertId')}\n")
+        return (
+            f"- Alert name: {essentials.get('alertRule')}\n"
+            f"- Severity: {essentials.get('severity')}\n"
+            f"- Monitor condition: {essentials.get('monitorCondition')}\n"
+            f"- Affected resource: {self.get_affected_resource(essentials)}\n"
+            f"- Resource group: {alert_target.get('resourcegroups')}\n"
+            f"- Description: {essentials.get('description')}\n"
+            f"- Monitoring service: {essentials.get('monitoringService')}\n"
+            f"- Signal type: {essentials.get('signalType')}\n"
+            f"- Fired time: {essentials.get('firedDateTime')}\n"
+            f"- Alert ID: {essentials.get('alertId')}\n"
+        )

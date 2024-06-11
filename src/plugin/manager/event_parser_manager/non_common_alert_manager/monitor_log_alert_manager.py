@@ -8,14 +8,12 @@ _LOGGER = logging.getLogger("spaceone")
 
 
 class LogAlertManager(EventParserManager):
-
     schema_id = "MonitorActivityLogAlert"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def event_parse(self, options, data) -> list:
-
         response = {
             "event_key": self.get_event_key(data),
             "event_type": "ALERT",
@@ -32,21 +30,22 @@ class LogAlertManager(EventParserManager):
 
     @staticmethod
     def make_title(data: dict) -> str:
-
         return f"{data.get('AlertRuleName')}"
 
     def make_description(self, data: dict) -> str:
-        resource = self.get_resource(data.get('ResourceId'))
+        resource = self.get_resource(data.get("ResourceId"))
 
-        return (f"- Alert name: {data.get('AlertRuleName')}\n"
-                f"- Severity: {data.get('Severity')}\n"
-                f"- Monitor condition: ALERT\n"
-                f"- Affected resource: {resource.get('workspaces')}\n"
-                f"- Resource group: {resource.get('resourceGroups')}\n"
-                f"- Description: {data.get('Description')}\n"
-                f"- Alert type: {data.get('AlertType')}\n"
-                f"- Search Query: {data.get('SearchQuery')}"
-                f"- Fired time: {datetime.utcnow()}\n")
+        return (
+            f"- Alert name: {data.get('AlertRuleName')}\n"
+            f"- Severity: {data.get('Severity')}\n"
+            f"- Monitor condition: ALERT\n"
+            f"- Affected resource: {resource.get('workspaces')}\n"
+            f"- Resource group: {resource.get('resourceGroups')}\n"
+            f"- Description: {data.get('Description')}\n"
+            f"- Alert type: {data.get('AlertType')}\n"
+            f"- Search Query: {data.get('SearchQuery')}"
+            f"- Fired time: {datetime.utcnow()}\n"
+        )
 
     @staticmethod
     def get_event_key(data: dict) -> str:
@@ -71,9 +70,4 @@ class LogAlertManager(EventParserManager):
 
     @staticmethod
     def get_resource_info(data: dict) -> dict:
-        return {
-            "resource_id": data.get("ResourceId"),
-            "name": data.get("ResourceId")
-        }
-
-
+        return {"resource_id": data.get("ResourceId"), "name": data.get("ResourceId")}
