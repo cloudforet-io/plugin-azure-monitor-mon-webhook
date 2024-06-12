@@ -18,6 +18,7 @@ class MonitorAlertSchemaManager(EventParserManager):
         custom_properties = data.get("customProperties")
         try:
             monitoring_service = essentials.get("monitoringService")
+            print(monitoring_service)
             monitoring_service_mgr = self.get_manager_by_monitoring_service(
                 monitoring_service
             )

@@ -6,20 +6,25 @@ _LOGGER = logging.getLogger("spaceone")
 
 
 class MonitorActivityLogAlertManager(EventParserManager):
-
     schema_id = "Microsoft.Insights/activityLogs"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def event_parse(self, options, data) -> list:
+    def event_parse(self, options: dict, data: dict) -> list:
         activity_log = data.get("context", {}).get("activityLog", {})
+        event_source = activity_log.get("eventSource")
+        properties = activity_log.get("properties", {})
 
+        if event_source in ["ServiceHealth", "ResourceHealth"]:
+            title = properties.get("title")
+        else:
+            title = self.make_title(activity_log)
         response = {
             "event_key": activity_log.get("eventDataId", ""),
             "event_type": self.get_event_type(data.get("status")),
-            "title": self.make_title(activity_log),
-            "description": self.make_description(activity_log),
+            "title": title,
+            "description": self._make_activity_log_description(activity_log),
             "severity": self.get_severity(activity_log),
             "resource": self.get_resource_info(activity_log),
             "rule": activity_log.get("operationName"),
@@ -51,17 +56,24 @@ class MonitorActivityLogAlertManager(EventParserManager):
             return "ALERT"
 
     @staticmethod
-    def make_description(activity_log: dict) -> str:
-        return (f"- Alert name: {activity_log.get('operationName')}\n"
-                f"- Severity: {activity_log.get('level')}\n"
-                f"- Affected resource: {activity_log.get('resourceId')}\n"
-                f"- Caller: {activity_log.get('caller')}\n"
-                f"- Resource group: {activity_log.get('resourceGroupName')}\n"
-                f"- Resource type: {activity_log.get('resourceType')}"
-                f"- Description: {activity_log.get('description')}\n"
-                f"- Event source: {activity_log.get('eventSource')}\n"
-                f"- Fired time: {activity_log.get('eventTimestamp')}\n"
-                f"- Event data id: {activity_log.get('eventDataId')}\n")
+    def _make_activity_log_description(activity_log: dict) -> str:
+        description = (
+            f"- Alert name: {activity_log.get('operationName')}\n"
+            f"- Severity: {activity_log.get('level')}\n"
+            f"- Affected resource: {activity_log.get('resourceId')}\n"
+            f"- Caller: {activity_log.get('caller')}\n"
+            f"- Resource group: {activity_log.get('resourceGroupName')}\n"
+            f"- Resource type: {activity_log.get('resourceType')}\n"
+            f"- Description: {activity_log.get('description')}\n"
+            f"- Event source: {activity_log.get('eventSource')}\n"
+            f"- Fired time: {activity_log.get('eventTimestamp')}\n"
+            f"- Event data id: {activity_log.get('eventDataId')}\n"
+        )
+        properties = activity_log.get("properties", {})
+        if communication := properties.get("communication"):
+            description += f"- Communication: {communication}\n"
+
+        return description
 
     @staticmethod
     def get_severity(activity_log: dict) -> str:
@@ -81,15 +93,15 @@ class MonitorActivityLogAlertManager(EventParserManager):
         return {
             "resource_id": activity_log.get("resourceId"),
             "name": activity_log.get("resourceId"),
-            "resource_type": activity_log.get("resourceType")
+            "resource_type": activity_log.get("resourceType"),
         }
 
     @staticmethod
     def get_additional_info(data: dict) -> dict:
         additional_info = {}
-        additional_info.update(data.get("context", {}).get("activityLog", {}).get("properties", {}))
+        additional_info.update(
+            data.get("context", {}).get("activityLog", {}).get("properties", {})
+        )
         additional_info.update(data.get("properties", {}))
 
         return additional_info
-
-
