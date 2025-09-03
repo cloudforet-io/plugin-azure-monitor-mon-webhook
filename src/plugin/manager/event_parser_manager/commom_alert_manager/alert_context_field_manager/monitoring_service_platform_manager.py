@@ -3,8 +3,8 @@ from plugin.manager.event_parser_manager.commom_alert_manager.monitor_alert_sche
 )
 
 
-class ServiceHealthManager(MonitorAlertSchemaManager):
-    monitoring_service = "ServiceHealth"
+class PlatformManager(MonitorAlertSchemaManager):
+    monitoring_service = "Platform"
 
     def event_parse(self, options: dict, data: dict) -> list:
         essentials: dict = data.get("essentials")
@@ -14,8 +14,8 @@ class ServiceHealthManager(MonitorAlertSchemaManager):
         response = {
             "event_key": essentials.get("alertId"),
             "event_type": self.get_event_status(essentials.get("monitorCondition")),
-            "title": alert_context.get("properties").get("title"),
-            "description": essentials.get("description"),
+            "title": self.make_title(essentials),
+            "description": self.make_description(essentials),
             "severity": self.get_severity(essentials.get("severity", "")),
             "resource": self.get_resource_info(essentials),
             "rule": essentials.get("alertRule"),
@@ -26,14 +26,3 @@ class ServiceHealthManager(MonitorAlertSchemaManager):
         }
 
         return [response]
-
-    @staticmethod
-    def _get_additional_info_from_alert_context(alert_context: dict) -> dict:
-        additional_info = {}
-        properties = alert_context.get("properties")
-        if properties:
-            additional_info.update(properties)
-            del alert_context["properties"]
-
-        additional_info.update(alert_context)
-        return additional_info

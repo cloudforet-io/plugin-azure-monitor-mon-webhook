@@ -40,8 +40,11 @@ class MonitorAlertSchemaManager(EventParserManager):
                 "rule": essentials.get("alertRule"),
                 "image_url": "",
                 "occurred_at": essentials.get("firedDateTime"),
-                "additional_info": custom_properties,
+                "additional_info": self.make_common_additional_info(
+                    alert_context, custom_properties
+                ),
             }
+
         return [response]
 
     @classmethod
@@ -136,3 +139,21 @@ class MonitorAlertSchemaManager(EventParserManager):
             f"- Fired time: {essentials.get('firedDateTime')}\n"
             f"- Alert ID: {essentials.get('alertId')}\n"
         )
+
+    @staticmethod
+    def make_common_additional_info(
+        alert_context: dict, custom_properties: dict
+    ) -> dict:
+        additional_info = {}
+        properties = alert_context.get("properties")
+
+        if custom_properties:
+            additional_info.update(custom_properties)
+
+        if properties:
+            additional_info.update(properties)
+            del alert_context["properties"]
+
+        additional_info.update(alert_context)
+
+        return additional_info

@@ -14,8 +14,11 @@ class MonitorMetricAlertManager(EventParserManager):
     def event_parse(self, options, data) -> list:
         context = data.get("context")
 
+        condition = context.get("condition")
+        properties = data.get("properties", {})
+
         response = {
-            "event_key": context.get('id'),
+            "event_key": context.get("id"),
             "event_type": self.get_event_status(data.get("status")),
             "title": self.make_title(context),
             "description": self.make_description(data),
@@ -24,7 +27,9 @@ class MonitorMetricAlertManager(EventParserManager):
             "rule": context.get("name"),
             "image_url": context.get("portalLink", ""),
             "occurred_at": context.get("timestamp"),
-            "additional_info": data.get("properties", {}),
+            "additional_info": self.make_additional_info_from_condition(
+                condition, properties
+            ),
         }
         return [response]
 
@@ -36,16 +41,18 @@ class MonitorMetricAlertManager(EventParserManager):
     def make_description(data: dict) -> str:
         context = data.get("context", {})
 
-        return (f"- Alert name: {context.get('name')}\n"
-                f"- Severity: {context.get('severity')}\n"
-                f"- Status: {data.get('status')}\n"
-                f"- Resource name: {context.get('resourceName')}\n"
-                f"- Resource type: {context.get('resourceType')}\n"
-                f"- Resource group: {context.get('resourceGroupName')}\n"
-                f"- Description: {context.get('description')}\n"
-                f"- Condition type: {context.get('conditionType')}\n"
-                f"- Fired time: {context.get('timestamp')}\n"
-                f"- Alert ID: {context.get('id')}\n")
+        return (
+            f"- Alert name: {context.get('name')}\n"
+            f"- Severity: {context.get('severity')}\n"
+            f"- Status: {data.get('status')}\n"
+            f"- Resource name: {context.get('resourceName')}\n"
+            f"- Resource type: {context.get('resourceType')}\n"
+            f"- Resource group: {context.get('resourceGroupName')}\n"
+            f"- Description: {context.get('description')}\n"
+            f"- Condition type: {context.get('conditionType')}\n"
+            f"- Fired time: {context.get('timestamp')}\n"
+            f"- Alert ID: {context.get('id')}\n"
+        )
 
     @staticmethod
     def get_event_status(status: str) -> str:
@@ -97,3 +104,15 @@ class MonitorMetricAlertManager(EventParserManager):
             return "NONE"
         else:
             return "UNKNOWN"
+
+    @staticmethod
+    def make_additional_info_from_condition(condition: dict, properties: dict) -> dict:
+        additional_info = {}
+
+        if condition:
+            additional_info["condition"] = condition
+
+        if properties:
+            additional_info.update(properties)
+
+        return additional_info
